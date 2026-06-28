@@ -1,9 +1,12 @@
-import time
 import json
+import time
 from pathlib import Path
 
 from fastapi import FastAPI
+
 from server.api.kis import KisClient
+from server.engine.feature_engine import FeatureEngine
+from server.engine.signal_engine import SignalEngine
 from server.state.state_manager import StateManager
 
 app = FastAPI(
@@ -13,6 +16,9 @@ app = FastAPI(
 )
 
 state_manager = StateManager()
+feature_engine = FeatureEngine()
+signal_engine = SignalEngine()
+
 
 @app.get("/")
 def root():
@@ -26,13 +32,11 @@ def root():
 @app.get("/kis/token-test")
 def kis_token_test():
     client = KisClient()
-    token_data = client.get_access_token()
+    token = client.get_access_token()
 
     return {
         "status": "success",
-        "token_type": token_data.get("token_type"),
-        "expires_in": token_data.get("expires_in"),
-        "access_token_exists": bool(token_data.get("access_token")),
+        "access_token_exists": bool(token),
     }
 
 
@@ -71,18 +75,20 @@ def get_watchlist_prices():
                 current_data=price_data,
             )
 
+            features = feature_engine.analyze(state)
+            signal = signal_engine.calculate(features)
+
             result.append({
                 "stock_code": stock["code"],
                 "stock_name": stock["name"],
-
                 "current_price": state["current"]["current_price"],
                 "change_rate": state["current"]["change_rate"],
                 "volume": state["current"]["volume"],
-
                 "foreign_net_buy_qty": state["current"]["foreign_net_buy_qty"],
                 "program_net_buy_qty": state["current"]["program_net_buy_qty"],
-
                 "delta": state["delta"],
+                "features": features,
+                "signal": signal,
                 "is_first_update": state["is_first_update"],
                 "api_status": "success",
             })
