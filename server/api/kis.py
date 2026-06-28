@@ -6,12 +6,16 @@ load_dotenv()
 
 
 class KisClient:
+    access_token_cache = None
     def __init__(self):
         self.app_key = os.getenv("KIS_APP_KEY")
         self.app_secret = os.getenv("KIS_APP_SECRET")
         self.base_url = "https://openapi.koreainvestment.com:9443"
 
     def get_access_token(self):
+        if KisClient.access_token_cache:
+            return KisClient.access_token_cache
+
         url = f"{self.base_url}/oauth2/tokenP"
 
         payload = {
@@ -23,11 +27,21 @@ class KisClient:
         response = requests.post(url, json=payload)
         response.raise_for_status()
 
-        return response.json()
+        token_data = response.json()
+        KisClient.access_token_cache = token_data.get("access_token")
+
+        return KisClient.access_token_cache
+
+    def get_token_info(self):
+        token = self.get_access_token()
+
+        return {
+            "access_token_exists": bool(token),
+            "token_cached": True,
+        }
 
     def get_stock_price(self, stock_code: str):
-        token_data = self.get_access_token()
-        access_token = token_data.get("access_token")
+        access_token = self.get_access_token()
 
         url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-price"
 
