@@ -1,4 +1,5 @@
 import os
+
 import requests
 from dotenv import load_dotenv
 
@@ -7,6 +8,7 @@ load_dotenv()
 
 class KisClient:
     access_token_cache = None
+
     def __init__(self):
         self.app_key = os.getenv("KIS_APP_KEY")
         self.app_secret = os.getenv("KIS_APP_SECRET")
@@ -66,6 +68,23 @@ class KisClient:
 
         return self._format_stock_price(stock_code, output)
 
+    def get_investor_trend(self, stock_code: str):
+        """
+        종목별 투자자 매매동향 조회
+        - 외국인
+        - 기관
+        - 개인
+
+        실제 한국투자 API endpoint와 tr_id는 다음 단계에서 연결.
+        """
+        return {
+            "stock_code": stock_code,
+            "foreign_net_buy_qty": None,
+            "institution_net_buy_qty": None,
+            "individual_net_buy_qty": None,
+            "api_status": "not_connected",
+        }
+
     def _to_int(self, value):
         if value in [None, ""]:
             return None
@@ -92,33 +111,25 @@ class KisClient:
             "stock_code": stock_code,
             "market": output.get("rprs_mrkt_kor_name"),
             "sector": output.get("bstp_kor_isnm") or output.get("bstp_kor_isn m"),
-
             "current_price": self._to_int(output.get("stck_prpr")),
             "change_price": self._to_int(output.get("prdy_vrss")),
             "change_rate": self._to_float(output.get("prdy_ctrt")),
-
             "open_price": self._to_int(output.get("stck_oprc")),
             "high_price": self._to_int(output.get("stck_hgpr")),
             "low_price": self._to_int(output.get("stck_lwpr")),
             "base_price": self._to_int(output.get("stck_sdpr")),
-
             "volume": self._to_int(output.get("acml_vol")),
             "trading_value": self._to_int(output.get("acml_tr_pbmn")),
-
             "foreign_holding_rate": self._to_float(output.get("hts_frgn_ehrt")),
             "foreign_net_buy_qty": self._to_int(output.get("frgn_ntby_qty")),
             "foreign_flow": self._flow_label(output.get("frgn_ntby_qty")),
-
             "program_net_buy_qty": self._to_int(output.get("pgtr_ntby_qty")),
             "program_flow": self._flow_label(output.get("pgtr_ntby_qty")),
-
             "per": self._to_float(output.get("per")),
             "pbr": self._to_float(output.get("pbr")),
             "eps": self._to_float(output.get("eps")),
             "bps": self._to_float(output.get("bps")),
-
             "week_52_high": self._to_int(output.get("w52_hgpr")),
             "week_52_low": self._to_int(output.get("w52_lwpr")),
-
             "api_status": "success",
         }
