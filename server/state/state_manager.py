@@ -2,7 +2,13 @@ class StateManager:
     def __init__(self):
         self.previous_states = {}
 
-    def update(self, stock_code: str, current_data: dict, investor_data: dict | None = None):
+    def update(
+    self,
+    stock_code: str,
+    current_data: dict,
+    investor_data: dict | None = None,
+    minute_data: dict | None = None,
+    ):
         previous_data = self.previous_states.get(stock_code)
 
         self.previous_states[stock_code] = current_data
@@ -12,6 +18,7 @@ class StateManager:
             "previous": previous_data,
             "current": current_data,
             "investor": investor_data or {},
+            "minute": minute_data or {},
             "delta": self._calculate_delta(previous_data, current_data),
             "is_first_update": previous_data is None,
         }

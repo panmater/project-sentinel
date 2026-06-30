@@ -95,6 +95,18 @@ class KisClient:
 
         return self._format_investor_trend(stock_code, output)
     
+    def get_minute_chart(self, stock_code: str):
+        """
+        종목별 분봉 데이터 조회
+        - 1분봉 / 5분봉 분석용
+        - 실제 KIS 분봉 API endpoint와 tr_id는 다음 단계에서 연결.
+        """
+        return {
+            "stock_code": stock_code,
+            "candles": [],
+            "api_status": "not_connected",
+        }
+
     def _to_int(self, value):
         if value in [None, ""]:
             return None

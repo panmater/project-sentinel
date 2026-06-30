@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from server.api.kis import KisClient
 from server.collector.investor import InvestorCollector
+from server.collector.minute import MinuteCollector
 from server.engine.feature_engine import FeatureEngine
 from server.engine.signal_engine import SignalEngine
 from server.state.state_manager import StateManager
@@ -20,6 +21,7 @@ state_manager = StateManager()
 feature_engine = FeatureEngine()
 signal_engine = SignalEngine()
 investor_collector = InvestorCollector()
+minute_collector = MinuteCollector()
 
 @app.get("/")
 def root():
@@ -72,11 +74,13 @@ def get_watchlist_prices():
             price_data = client.get_stock_price(stock["code"])
 
             investor_data = investor_collector.get(stock["code"])
+            minute_data = minute_collector.get(stock["code"])
 
             state = state_manager.update(
                 stock_code=stock["code"],
                 current_data=price_data,
                 investor_data=investor_data,
+                minute_data=minute_data,
             )
 
             features = feature_engine.analyze(state)
