@@ -34,6 +34,18 @@ class SignalEngine:
         if features["foreign_holding_high"]:
             score += 10
 
+        if features["minute_price_up"]:
+            score += 15
+
+        if features["minute_volume_surge"]:
+            score += 15
+
+        if features["minute_price_down"]:
+            score -= 10
+
+        if features["minute_price_down"]:
+            score -= 10
+
         return {
             "score": score,
             "grade": self._grade(score)

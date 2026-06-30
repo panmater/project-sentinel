@@ -119,3 +119,12 @@ def get_watchlist_prices():
 @app.get("/stocks/{stock_code}/investor-summary")
 def get_stock_investor_summary(stock_code: str):
     return investor_collector.get(stock_code)
+
+@app.get("/stocks/{stock_code}/minute")
+def get_stock_minute(stock_code: str):
+    client = KisClient()
+    return client.get_minute_chart(stock_code)
+
+@app.get("/stocks/{stock_code}/minute-summary")
+def get_stock_minute_summary(stock_code: str):
+    return minute_collector.get(stock_code)

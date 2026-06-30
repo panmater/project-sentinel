@@ -7,6 +7,7 @@ class FeatureEngine:
 
         delta = state["delta"]
         current = state["current"]
+        minute = state.get("minute", {})
 
         features = {
 
@@ -24,7 +25,7 @@ class FeatureEngine:
 
             "foreign_holding_high":
                 (current["foreign_holding_rate"] or 0) >= 30,        
-
+           
         }
 
         investor = state.get("investor", {})
@@ -48,6 +49,15 @@ class FeatureEngine:
 
             "individual_20d_buying":
                 investor.get("individual_20d_sum", 0) > 0,
+
+            "minute_price_up":
+                minute.get("recent_price_direction") == "up",
+
+            "minute_price_down":
+                minute.get("recent_price_direction") == "down",
+
+            "minute_volume_surge":
+                minute.get("volume_surge", False),
 
         })
 

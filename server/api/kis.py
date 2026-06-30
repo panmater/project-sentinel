@@ -96,17 +96,35 @@ class KisClient:
         return self._format_investor_trend(stock_code, output)
     
     def get_minute_chart(self, stock_code: str):
-        """
-        종목별 분봉 데이터 조회
-        - 1분봉 / 5분봉 분석용
-        - 실제 KIS 분봉 API endpoint와 tr_id는 다음 단계에서 연결.
-        """
-        return {
-            "stock_code": stock_code,
-            "candles": [],
-            "api_status": "not_connected",
+        access_token = self.get_access_token()
+
+        url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-time-itemchartprice"
+
+        headers = {
+            "content-type": "application/json",
+            "authorization": f"Bearer {access_token}",
+            "appkey": self.app_key,
+            "appsecret": self.app_secret,
+            "tr_id": "FHKST03010200",
         }
 
+        params = {
+            "FID_ETC_CLS_CODE": "",
+            "FID_COND_MRKT_DIV_CODE": "J",
+            "FID_INPUT_ISCD": stock_code,
+            "FID_INPUT_HOUR_1": "153000",
+            "FID_PW_DATA_INCU_YN": "N",
+        }
+
+        response = requests.get(url, headers=headers, params=params)
+        response.raise_for_status()
+
+        raw_data = response.json()
+        output = raw_data.get("output2") or []
+
+        return self._format_minute_chart(stock_code, output)
+        
+    
     def _to_int(self, value):
         if value in [None, ""]:
             return None
@@ -172,5 +190,25 @@ class KisClient:
         return {
             "stock_code": stock_code,
             "history": result,
+            "api_status": "success",
+        }
+    
+    def _format_minute_chart(self, stock_code: str, output: list):
+        candles = []
+
+        for row in output:
+            candles.append({
+                "date": row.get("stck_bsop_date"),
+                "time": row.get("stck_cntg_hour"),
+                "price": self._to_int(row.get("stck_prpr")),
+                "open": self._to_int(row.get("stck_oprc")),
+                "high": self._to_int(row.get("stck_hgpr")),
+                "low": self._to_int(row.get("stck_lwpr")),
+                "volume": self._to_int(row.get("cntg_vol")),
+            })
+
+        return {
+            "stock_code": stock_code,
+            "candles": candles,
             "api_status": "success",
         }
