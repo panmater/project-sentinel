@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from server.api.kis import KisClient
+from server.collector.investor import InvestorCollector
 from server.engine.feature_engine import FeatureEngine
 from server.engine.signal_engine import SignalEngine
 from server.state.state_manager import StateManager
@@ -18,7 +19,7 @@ app = FastAPI(
 state_manager = StateManager()
 feature_engine = FeatureEngine()
 signal_engine = SignalEngine()
-
+investor_collector = InvestorCollector()
 
 @app.get("/")
 def root():
@@ -70,14 +71,17 @@ def get_watchlist_prices():
         try:
             price_data = client.get_stock_price(stock["code"])
 
+            investor_data = investor_collector.get(stock["code"])
+
             state = state_manager.update(
                 stock_code=stock["code"],
                 current_data=price_data,
+                investor_data=investor_data,
             )
 
             features = feature_engine.analyze(state)
-            signal = signal_engine.calculate(features)
-
+            signal = signal_engine.calculate(features, state)
+            
             result.append({
                 "stock_code": stock["code"],
                 "stock_name": stock["name"],
@@ -107,3 +111,7 @@ def get_watchlist_prices():
         "count": len(result),
         "stocks": result,
     }
+
+@app.get("/stocks/{stock_code}/investor-summary")
+def get_stock_investor_summary(stock_code: str):
+    return investor_collector.get(stock_code)

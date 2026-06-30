@@ -69,22 +69,32 @@ class KisClient:
         return self._format_stock_price(stock_code, output)
 
     def get_investor_trend(self, stock_code: str):
-        """
-        종목별 투자자 매매동향 조회
-        - 외국인
-        - 기관
-        - 개인
+        access_token = self.get_access_token()
 
-        실제 한국투자 API endpoint와 tr_id는 다음 단계에서 연결.
-        """
-        return {
-            "stock_code": stock_code,
-            "foreign_net_buy_qty": None,
-            "institution_net_buy_qty": None,
-            "individual_net_buy_qty": None,
-            "api_status": "not_connected",
+        url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-investor"
+
+        headers = {
+            "content-type": "application/json",
+            "authorization": f"Bearer {access_token}",
+            "appkey": self.app_key,
+            "appsecret": self.app_secret,
+            "tr_id": "FHKST01010900",
         }
 
+        params = {
+            "fid_cond_mrkt_div_code": "J",
+            "fid_input_iscd": stock_code,
+        }
+
+        response = requests.get(url, headers=headers, params=params)
+        response.raise_for_status()
+
+        raw_data = response.json()
+
+        output = raw_data.get("output") or []
+
+        return self._format_investor_trend(stock_code, output)
+    
     def _to_int(self, value):
         if value in [None, ""]:
             return None
@@ -131,5 +141,24 @@ class KisClient:
             "bps": self._to_float(output.get("bps")),
             "week_52_high": self._to_int(output.get("w52_hgpr")),
             "week_52_low": self._to_int(output.get("w52_lwpr")),
+            "api_status": "success",
+        }
+    
+    def _format_investor_trend(self, stock_code: str, output: list):
+        result = []
+        for row in output:
+            result.append({
+                "date": row.get("stck_bsop_date"),
+                "close_price": self._to_int(row.get("stck_clpr")),
+                "foreign_net_buy_qty":
+                    self._to_int(row.get("frgn_ntby_qty")),
+                "institution_net_buy_qty":
+                    self._to_int(row.get("orgn_ntby_qty")),
+                "individual_net_buy_qty":
+                    self._to_int(row.get("prsn_ntby_qty")),
+            })
+        return {
+            "stock_code": stock_code,
+            "history": result,
             "api_status": "success",
         }

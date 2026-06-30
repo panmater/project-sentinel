@@ -23,8 +23,32 @@ class FeatureEngine:
             "change_rate_positive": current["change_rate"] > 0,
 
             "foreign_holding_high":
-                (current["foreign_holding_rate"] or 0) >= 30,
+                (current["foreign_holding_rate"] or 0) >= 30,        
 
         }
+
+        investor = state.get("investor", {})
+
+        features.update({
+
+            "foreign_5d_buying":
+                investor.get("foreign_5d_sum", 0) > 0,
+
+            "foreign_20d_buying":
+                investor.get("foreign_20d_sum", 0) > 0,
+
+            "institution_5d_buying":
+                investor.get("institution_5d_sum", 0) > 0,
+
+            "institution_20d_buying":
+                investor.get("institution_20d_sum", 0) > 0,
+
+            "individual_5d_buying":
+                investor.get("individual_5d_sum", 0) > 0,
+
+            "individual_20d_buying":
+                investor.get("individual_20d_sum", 0) > 0,
+
+        })
 
         return features
